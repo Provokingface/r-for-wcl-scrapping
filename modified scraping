@@ -73,7 +73,7 @@ write_excel_csv(pagle, path = "5009raw.csv")
 gdh <- "https://docs.google.com/spreadsheets/d/1OnfZQR3TFI20auyceZpMPn0bEzy0RhTAcemESpw2Ons"
 
 
-for (page1 in seq(from = 1, to = 1)){
+for (page1 in seq(from = 1, to = 26)){
   col_link_h = paste0("https://classic.warcraftlogs.com/server/rankings/5009/1010#metric=hps&partition=2&class=Healers&boss=-1&page=",page1)
 
 remDr$navigate(col_link_h)
