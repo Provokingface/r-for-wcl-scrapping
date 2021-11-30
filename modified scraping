@@ -1,0 +1,122 @@
+```{r}
+library(tidyverse)
+library(rvest)
+library(RSelenium)
+library(tm)
+library(googlesheets4)
+googlesheets4::gs4_auth()
+1
+```
+```{r}
+rD<-rsDriver(browser = "chrome", port = 5656L, chromever = "96.0.4664.35")
+remDr <- rD[["client"]]
+```
+
+
+
+```{r}
+gds <- "https://docs.google.com/spreadsheets/d/1nAe0kMYwAKMxK6EG7gcnA-Q1ii-AmjIqR1o9ka7IUSk"
+
+pagle = data.frame()
+
+for (page in seq(from = 1, to = 50)){
+  col_link = paste0("https://classic.warcraftlogs.com/server/rankings/5009/1010#metric=dps&partition=2&class=DPS&boss=-1&page=",page)
+
+remDr$navigate(col_link)
+Sys.sleep(10)
+
+wclp1 <- read_html(remDr$getPageSource()[[1]])
+tb <- wclp1 %>% html_table() %>% .[[6]] 
+pl <- wclp1 %>%
+  html_nodes("tbody") %>% .[6] %>% html_nodes("tr") %>% html_attr("id")
+
+tlist <- data.frame(class = wclp1 %>% html_nodes('.sprite') %>% 
+  html_attr("class")) %>%
+  filter(grepl("players-table-spec-icon sprite actor-sprite",class))
+
+progress_links <- wclp1 %>% html_nodes('.main-table-player') %>% html_attr("href") %>% gsub("\\?mode=detailed&zone=1010#metric=dps","",.) %>% paste0("https://classic.warcraftlogs.com",.)
+
+get_progress <- function(progress_link){
+  remDr$navigate(progress_link)
+  player_page <- read_html(remDr$getPageSource()[[1]])
+   Sys.sleep(3)
+  player_progress <- player_page %>% html_nodes('.header-zone-progress-text') %>% html_text() %>% paste(collapse = ",") %>% gsub(",.*$", "", .)
+  player_bpa <- player_page %>% html_nodes('.best-perf-avg') %>% html_text()
+  player <- paste(player_progress, player_bpa, sep = ",")
+  return(player)
+}
+
+players <- sapply(progress_links, FUN = get_progress)
+round <- data.frame(rank = tb$Rank, name = tb$Name, class = tlist, score = tb$Score, progress = players, link = progress_links)
+roundgood <- round %>% filter(grepl("Avg", progress))
+roundbad <- round %>% filter(!grepl("Avg", progress))
+
+while(dim(roundbad)[1] != 0){
+  print("Proofreading......")
+playersr2 <- sapply(as.character(roundbad$link), FUN = get_progress)
+round2 <- data.frame(rank = roundbad$rank, name = roundbad$name, class = roundbad$class, score = roundbad$score, progress = playersr2, link = roundbad$link)
+roundgood <- rbind(roundgood, round2 %>% filter(grepl("Avg", progress)))
+roundbad <- round2 %>% filter(!grepl("Avg", progress))
+}
+pagle <- rbind(pagle,roundgood)
+sheet_append(gds, roundgood)
+print(paste("Page:", page))
+}
+```
+
+```{r}
+write_excel_csv(pagle, path = "5009raw.csv")
+```
+
+
+```{r}
+gdh <- "https://docs.google.com/spreadsheets/d/1OnfZQR3TFI20auyceZpMPn0bEzy0RhTAcemESpw2Ons"
+
+
+for (page1 in seq(from = 1, to = 1)){
+  col_link_h = paste0("https://classic.warcraftlogs.com/server/rankings/5009/1010#metric=hps&partition=2&class=Healers&boss=-1&page=",page1)
+
+remDr$navigate(col_link_h)
+
+Sys.sleep(10)
+
+wclp1 <- read_html(remDr$getPageSource()[[1]])
+tb <- wclp1 %>% html_table() %>% .[[6]] 
+pl = wclp1 %>%
+  html_nodes("tbody") %>% .[6] %>% html_nodes("tr") %>% html_attr("id")
+
+tlist <- data.frame(class = wclp1 %>% html_nodes('.sprite') %>%                
+  html_attr("class")) %>%
+  filter(grepl("players-table-spec-icon sprite actor-sprite",class))
+
+progress_links <- wclp1 %>% html_nodes('.main-table-player') %>% html_attr("href") %>% gsub("\\?mode=detailed&zone=1010#metric=hps","",.) %>% paste0("https://classic.warcraftlogs.com",.)
+
+get_progress <- function(progress_link){
+  remDr$navigate(progress_link)
+  player_page <- read_html(remDr$getPageSource()[[1]])
+   Sys.sleep(3)
+  player_progress <- player_page %>% html_nodes('.header-zone-progress-text') %>% html_text() %>% paste(collapse = ",") %>% gsub(",.*$", "", .)
+  player_bpa <- player_page %>% html_nodes('.best-perf-avg') %>% html_text()
+  player <- paste(player_progress, player_bpa, sep = ",")
+  return(player)
+}
+
+players <- sapply(progress_links, FUN = get_progress)
+
+round <- data.frame(rank = tb$Rank, name = tb$Name, class = tlist, score = tb$Score, progress = players, link = progress_links)
+roundgood <- round %>% filter(grepl("Avg", progress))
+roundbad <- round %>% filter(!grepl("Avg", progress))
+
+while(dim(roundbad)[1] != 0){
+  print("Proofreading......")
+playersr2 <- sapply(as.character(roundbad$link), FUN = get_progress)
+round2 <- data.frame(rank = roundbad$rank, name = roundbad$name, class = roundbad$class, score = roundbad$score, progress = playersr2, link = roundbad$link)
+roundgood <- rbind(roundgood, round2 %>% filter(grepl("Avg", progress)))
+roundbad <- round2 %>% filter(!grepl("Avg", progress))
+}
+pagle <- rbind(pagle,roundgood)
+sheet_append(gdh, roundgood)
+print(paste("Page:", page1))
+}
+
+```
