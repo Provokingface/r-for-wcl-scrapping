@@ -59,7 +59,7 @@ roundgood <- round %>% filter(grepl("Avg", progress))
 roundbad <- round %>% filter(!grepl("Avg", progress))
 
 while(dim(roundbad)[1] != 0){
-  print("Proofreading......")
+  print(paste("Proofreading......", nrow(roundbad),"player(s) left"))
 playersr2 <- sapply(as.character(roundbad$link), FUN = get_progress)
 round2 <- data.frame(rank = roundbad$rank, name = roundbad$name, class = roundbad$class, score = roundbad$score, progress = playersr2, link = roundbad$link)
 roundgood <- rbind(roundgood, round2 %>% filter(grepl("Avg", progress)))
@@ -111,7 +111,7 @@ roundgood <- round %>% filter(grepl("Avg", progress))
 roundbad <- round %>% filter(!grepl("Avg", progress))
 
 while(dim(roundbad)[1] != 0){
-  print("Proofreading......")
+  print(paste("Proofreading......", nrow(roundbad),"player(s) left"))
 playersr2 <- sapply(as.character(roundbad$link), FUN = get_progress)
 round2 <- data.frame(rank = roundbad$rank, name = roundbad$name, class = roundbad$class, score = roundbad$score, progress = playersr2, link = roundbad$link)
 roundgood <- rbind(roundgood, round2 %>% filter(grepl("Avg", progress)))
