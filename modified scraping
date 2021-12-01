@@ -168,15 +168,16 @@ test1 <- pagle1 %>% filter(region != "US")
 pagle1d <- pagle1 %>% group_by(name) %>% filter(n() == 2) %>% arrange(desc(name))
 pagle1u <- pagle1 %>% group_by(name) %>% filter(n() == 1)
 
-##Enter number of lines for aa/2
+k <- nrow(pagle1d)/2
+
 pagle1d1 <- data.frame()
-for (aa in seq(from = 1, to = 1)){
+for (aa in seq(from = 1, to = k)){
   bb = aa * 2
  pagle1d1 <- rbind(pagle1d1,pagle1d[bb:bb,])
 }
 
 pagle1d2 <- data.frame()
-for (aa in seq(from = 1, to = 1)){
+for (aa in seq(from = 1, to = k)){
   bb = aa * 2 - 1
  pagle1d2 <- rbind(pagle1d2,pagle1d[bb:bb,])
 }
