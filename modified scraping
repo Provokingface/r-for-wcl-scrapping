@@ -76,6 +76,7 @@ for (page1 in seq(from = 1, to = 1)){
 
 remDr$navigate(col_link_h)
 
+##等待20秒防止页面延迟
 Sys.sleep(20)
 
 wclp1 <- read_html(remDr$getPageSource()[[1]])
@@ -90,7 +91,8 @@ round <- data.frame(rank = tb$Rank, name = tb$Name, class = tlist, score = tb$Sc
 get_progress <- function(progress_link){
   remDr$navigate(progress_link)
   player_page <- read_html(remDr$getPageSource()[[1]])
-   Sys.sleep(3)
+  ##服务器上限每分钟20次请求故添加延迟
+  Sys.sleep(3)
   player_progress <- player_page %>% html_nodes('.header-zone-progress-text') %>% html_text() %>% paste(collapse = ",") %>% gsub(",.*$", "", .)
   player_bpa <- player_page %>% html_nodes('.best-perf-avg') %>% html_text()
   player <- paste(player_progress, player_bpa, sep = ",")
