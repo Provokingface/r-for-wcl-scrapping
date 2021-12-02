@@ -52,6 +52,7 @@ round <- data.frame(round, progress = players) %>% select(rank, name, class, sco
 roundgood <- round %>% filter(grepl("Avg", progress))
 roundbad <- round %>% filter(!grepl("Avg", progress))
 
+##反复抓取失败行
 while(dim(roundbad)[1] != 0){
   print(paste("Proofreading......", nrow(roundbad),"player(s) left"))
 playersr2 <- sapply(as.character(roundbad$link), FUN = get_progress)
@@ -122,7 +123,7 @@ write_excel_csv(pagle, path = "5009raw.csv")
 ```
 
 
-##Data handling
+##数据处理
 ```{r}
 pagle1 <- pagle %>%
   mutate(class = gsub("\\players-table-spec-icon sprite actor-sprite-","",class)) %>% 
@@ -156,7 +157,8 @@ pagle1 <- pagle %>%
 test1 <- pagle1 %>% filter(region != "US")
 ```
 
-
+##分离多天赋上榜
+##三天赋上榜只保留前二
 ```{r}
 pagle4q <- pagle1 %>% group_by(name) %>% filter(n() == 4) %>% arrange(desc(name))
 pagle3t <- pagle1 %>% group_by(name) %>% filter(n() == 3) %>%
@@ -166,9 +168,10 @@ pagle1d <- pagle1 %>% group_by(name) %>% filter(n() == 2) %>% arrange(desc(name)
 pagle1d <- rbind(pagle1d,pagle3t)
 pagle1u <- pagle1 %>% group_by(name) %>% filter(n() == 1)
 ```
+
+##分离双天赋
 ```{r}
 k <- nrow(pagle1d)/2
-
 pagle1d1 <- data.frame()
 for (aa in seq(from = 1, to = k)){
   bb = aa * 2
@@ -183,7 +186,7 @@ for (aa in seq(from = 1, to = k)){
 ```
 
 
-
+##英翻中
 ```{r}
 pagle1d1 <- pagle1d1 %>% mutate(classcn = ifelse(class == "Mage", "法", 
                                            ifelse(class == "Shaman", "萨", ifelse(class == "Hunter", "猎", ifelse(class == "Priest", "牧", ifelse(class == "Druid", "德", ifelse(class == "Warlock", "术", ifelse(class == "Rogue", "贼", ifelse(class == "Warrior", "战","骑")))))))))
@@ -201,7 +204,7 @@ pagle1u <- pagle1u %>% mutate(classcn = ifelse(class == "Mage", "法",
 pagle1u <- pagle1u %>% mutate(talentcn = ifelse(talent == "Arcane", "奥", ifelse(talent == "Fire", "火", ifelse(talent == "Frost", "冰", ifelse(talent == "Elemental", "元素", ifelse(talent == "Enhancement", "增强", ifelse(talent == "Restoration", "奶", ifelse(talent == "BeastMastery", "兽王", ifelse(talent == "Marksmanship", "射击", ifelse(talent == "Survival", "生存", ifelse(talent == "Discipline", "戒律", ifelse(talent == "Holy"& class == "Priest", "神", ifelse(talent == "Shadow", "暗", ifelse(talent == "Balance", "平衡", ifelse(talent == "Feral", "野", ifelse(talent == "Affliction", "痛苦", ifelse(talent == "Demonology", "恶魔", ifelse(talent == "Destruction", "毁灭", ifelse(talent == "Assassination", "刺杀", ifelse(talent == "Combat", "战斗", ifelse(talent == "Subtlety", "敏锐", ifelse(talent == "Arms", "武器", ifelse(talent == "Fury", "狂暴", ifelse(talent == "Gladiator", "角斗", ifelse(talent == "Holy" & class == "Paladin", "奶", "惩戒")))))))))))))))))))))))))
 
 
-
+##拼词条
 pagle1u <- pagle1u %>% mutate(lua = paste0('["',name,'"]'," = ",'"',color, "D:","(", talentcn, classcn, ")", score, " -> Boss均分:", bsa, '%",'))
 pagle1u <- pagle1u %>% mutate(lua2 = paste0('["',name, '"]'," = ",'"',"团本进度:",p2progressf,'",'))
 pagle1u <- pagle1u %>% mutate(lua3 = paste0('["',name, '"]'," = ",'"',"Boss均分:",bsa,'",')) %>% filter(is.na(rank) == "FALSE")
