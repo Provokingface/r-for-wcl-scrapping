@@ -141,6 +141,8 @@ pagle1 <- pagle %>%
   mutate(bsa = lapply(splits, `[`,2)) %>%
   mutate(p2progress = gsub("\\ ","",p2progress)) %>%
   mutate(bsa = str_sub(bsa,-7,-2)) %>%
+  mutate(bsa = str_sub(bsa,1,4)) %>%
+  mutate(bsa = as.numeric(bsa)) %>%
   mutate(p2progress1 = ifelse(str_sub(p2progress,-2,-1) == 10, p2progress, "0")) %>%
   mutate(p2progress1 = gsub("\\/10","",p2progress1)) %>%
   mutate(p2progressf = ifelse(p2progress1 == 0, "保密", p2progress)) %>%
@@ -153,7 +155,8 @@ pagle1 <- pagle %>%
   mutate(color = ifelse(bsa >= 99, "S", ifelse(bsa < 99 & bsa >= 95, "L", ifelse(bsa < 95 & bsa >= 75, "E", ifelse(bsa < 75 & bsa >= 50, "R", ifelse(bsa < 50 & bsa >= 25, "U", "C")))))) %>%
   mutate(server = ifelse(server == "Bloodsail", "Bloodsail Buccaneers", server), region = "US") %>%
   mutate(server = ifelse(server == "Deviate", "Deviate Delight", server), region = "US") %>%
-  mutate(server = ifelse(server == "Old", "Old Blanchy", server), region = "US")
+  mutate(server = ifelse(server == "Old", "Old Blanchy", server), region = "US") %>%
+  filter(is.na(bsa) == FALSE)
 ```
 
 #检测是否分离正确，看region是不是US
