@@ -5,16 +5,18 @@ library(RSelenium)
 library(tm)
 library(googlesheets4)
 googlesheets4::gs4_auth()
-1
+##每页完成后上传谷歌网盘
+##可多人分块抓取
 ```
+##设置selenium客户端
 ```{r}
 rD<-rsDriver(browser = "chrome", port = 5688L, chromever = "96.0.4664.35")
 remDr <- rD[["client"]]
 ```
 
-
 ##Pagle输出全明星（前5000，包括双天赋上榜）
 ```{r}
+##下面为谷歌sheets链接
 gds <- "https://docs.google.com/spreadsheets/d/1nAe0kMYwAKMxK6EG7gcnA-Q1ii-AmjIqR1o9ka7IUSk"
 
 pagle = data.frame()
