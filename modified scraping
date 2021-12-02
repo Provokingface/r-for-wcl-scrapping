@@ -19,7 +19,7 @@ gds <- "https://docs.google.com/spreadsheets/d/1nAe0kMYwAKMxK6EG7gcnA-Q1ii-AmjIq
 
 pagle = data.frame()
 
-for (page in seq(from = 1, to = 50)){
+for (page in seq(from = 1, to = 1)){
   col_link = paste0("https://classic.warcraftlogs.com/server/rankings/5009/1010#metric=dps&partition=2&class=DPS&boss=-1&page=",page)
 
 remDr$navigate(col_link)
@@ -70,7 +70,7 @@ print(paste("Page:", page))
 gdh <- "https://docs.google.com/spreadsheets/d/1OnfZQR3TFI20auyceZpMPn0bEzy0RhTAcemESpw2Ons"
 
 
-for (page1 in seq(from = 10, to = 10)){
+for (page1 in seq(from = 1, to = 1)){
   col_link_h = paste0("https://classic.warcraftlogs.com/server/rankings/5009/1010#metric=hps&partition=2&class=Healers&boss=-1&page=",page1)
 
 remDr$navigate(col_link_h)
@@ -158,9 +158,15 @@ test1 <- pagle1 %>% filter(region != "US")
 
 
 ```{r}
+pagle4q <- pagle1 %>% group_by(name) %>% filter(n() == 4) %>% arrange(desc(name))
+pagle3t <- pagle1 %>% group_by(name) %>% filter(n() == 3) %>%
+  filter(score != min(score)) %>%
+  arrange(desc(name)) 
 pagle1d <- pagle1 %>% group_by(name) %>% filter(n() == 2) %>% arrange(desc(name))
+pagle1d <- rbind(pagle1d,pagle3t)
 pagle1u <- pagle1 %>% group_by(name) %>% filter(n() == 1)
-
+```
+```{r}
 k <- nrow(pagle1d)/2
 
 pagle1d1 <- data.frame()
