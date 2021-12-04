@@ -1,21 +1,13 @@
----
-title: "WCL-文字"
-author: "PX"
-date: "11/14/2021"
-output: html_document
----
-
-```{r}
 library(tidyverse)
 library(data.table)
 dps <- read_csv("pagleallstardps.csv")
 heal <- read_csv("pagleallstarheal.csv")
 pagle <- rbind(dps,heal)
 level <- read_csv("level.csv")
-```
+
 
 ##Data handling
-```{r}
+
 pagle1 <- pagle %>%
   mutate(class = gsub("\\players-table-spec-icon sprite actor-sprite-","",class)) %>% 
   mutate(class = gsub("\\-"," ",class)) %>%
@@ -44,8 +36,7 @@ pagle1 <- pagle %>%
   mutate(server = ifelse(server == "Deviate", "Deviate Delight", server), region = "US") %>%
   mutate(server = ifelse(server == "Old", "Old Blanchy", server), region = "US") %>%
   filter(is.na(bsa) == FALSE)
-```
-```{r}
+
 gname <- as.character(pagle1$name)
 grade <- as.character(pagle1$bsa)
 gg <- data.frame(name = gname,grade = as.numeric(grade))
@@ -53,16 +44,16 @@ setDT(gg)
 setDT(level)
 title <- level[gg, roll = TRUE, on = c("level" = "grade")]
 pagle1 <- cbind(pagle1, title = title$tittle)
-```
+
 
 #检测是否分离正确，看region是不是US
-```{r}
+
 test1 <- pagle1 %>% filter(region != "US")
 test2 <- pagle1 %>% filter(is.na(bsa) == TRUE)
-```
 
 
-```{r}
+
+
 pagle4q <- pagle1 %>% group_by(name) %>% filter(n() == 4) %>% arrange(desc(name))
 pagle3t <- pagle1 %>% group_by(name) %>% filter(n() == 3) %>%
   filter(score != min(score)) %>%
@@ -70,8 +61,7 @@ pagle3t <- pagle1 %>% group_by(name) %>% filter(n() == 3) %>%
 pagle1d <- pagle1 %>% group_by(name) %>% filter(n() == 2) %>% arrange(desc(name))
 pagle1d <- rbind(pagle1d,pagle3t)
 pagle1u <- pagle1 %>% group_by(name) %>% filter(n() == 1)
-```
-```{r}
+
 k <- nrow(pagle1d)/2
 
 pagle1d1 <- data.frame()
@@ -85,11 +75,11 @@ for (aa in seq(from = 1, to = k)){
   bb = aa * 2 - 1
  pagle1d2 <- rbind(pagle1d2,pagle1d[bb:bb,])
 }
-```
 
 
 
-```{r}
+
+
 pagle1d1 <- pagle1d1 %>% mutate(classcn = ifelse(class == "Mage", "法", 
                                            ifelse(class == "Shaman", "萨", ifelse(class == "Hunter", "猎", ifelse(class == "Priest", "牧", ifelse(class == "Druid", "德", ifelse(class == "Warlock", "术", ifelse(class == "Rogue", "贼", ifelse(class == "Warrior", "战","骑")))))))))
 
@@ -104,9 +94,7 @@ pagle1u <- pagle1u %>% mutate(classcn = ifelse(class == "Mage", "法",
                                            ifelse(class == "Shaman", "萨", ifelse(class == "Hunter", "猎", ifelse(class == "Priest", "牧", ifelse(class == "Druid", "德", ifelse(class == "Warlock", "术", ifelse(class == "Rogue", "贼", ifelse(class == "Warrior", "战","骑")))))))))
 
 pagle1u <- pagle1u %>% mutate(talentcn = ifelse(talent == "Arcane", "奥", ifelse(talent == "Fire", "火", ifelse(talent == "Frost", "冰", ifelse(talent == "Elemental", "元素", ifelse(talent == "Enhancement", "增强", ifelse(talent == "Restoration", "奶", ifelse(talent == "BeastMastery", "兽王", ifelse(talent == "Marksmanship", "射击", ifelse(talent == "Survival", "生存", ifelse(talent == "Discipline", "戒律", ifelse(talent == "Holy"& class == "Priest", "神", ifelse(talent == "Shadow", "暗", ifelse(talent == "Balance", "平衡", ifelse(talent == "Feral", "野", ifelse(talent == "Affliction", "痛苦", ifelse(talent == "Demonology", "恶魔", ifelse(talent == "Destruction", "毁灭", ifelse(talent == "Assassination", "刺杀", ifelse(talent == "Combat", "战斗", ifelse(talent == "Subtlety", "敏锐", ifelse(talent == "Arms", "武器", ifelse(talent == "Fury", "狂暴", ifelse(talent == "Gladiator", "角斗", ifelse(talent == "Holy" & class == "Paladin", "奶", "惩戒")))))))))))))))))))))))))
-```
 
-```{r}
 pagle1u <- pagle1u %>% mutate(lua = paste0('["', name, '"]', " = ", '"', color, "D:", "(", talentcn, classcn, ")", score, " -> 评价:", title, '%",'))
 pagle1u <- pagle1u %>% mutate(lua2 = paste0('["',name, '"]'," = ",'"',"团本进度:",p2progressf,'",'))
 pagle1u <- pagle1u %>% mutate(lua3 = paste0('["',name, '"]'," = ",'"', color,"评价:",title, '%",'))
@@ -118,14 +106,14 @@ pagle1d1 <- pagle1d1 %>% mutate(lua3 = paste0('["',name, '"]'," = ",'"', color,"
 pagle1d2 <- pagle1d2 %>% mutate(lua = paste0(color, "K:","(", talentcn, classcn, ")", score, " -> 评价:", title, '%",'))
 pagle1d2 <- pagle1d2 %>% mutate(lua2 = paste0('["',name, '"]'," = ",'"',"团本进度:",p2progressf,'",'))
 pagle1d2 <- pagle1d2 %>% mutate(lua3 = paste0('["',name, '"]'," = ",'"', color,"评价:",title , '%",')) 
-```
+
 
 ##1u是所有单天赋词条
 ##1dd是所有双天赋词条
-```{r}
+
 palge1dd <- data.frame(lua1 = pagle1d1$lua, lua2 = pagle1d2$lua)
 palge1dd <- palge1dd %>% mutate(lua3 = paste0(lua1,lua2))
 write_excel_csv(palge1dd, path = "palge1dd.csv")
 write_excel_csv(pagle1d1, path = "palge1d1.csv")
 write_excel_csv(pagle1u, path = "pagle1u.csv")
-```
+
