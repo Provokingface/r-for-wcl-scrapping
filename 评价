@@ -1,0 +1,118 @@
+library(tidyverse)
+library(data.table)
+dps <- read_csv("pagleallstardps.csv")
+heal <- read_csv("pagleallstarheal.csv")
+pagle <- rbind(dps,heal)
+level <- read_csv("level.csv")
+
+
+##Data handling
+
+pagle1 <- pagle %>%
+  mutate(class = gsub("\\players-table-spec-icon sprite actor-sprite-","",class)) %>% 
+  mutate(class = gsub("\\-"," ",class)) %>%
+  mutate(splits = strsplit(name, "\\s+")) %>%
+  mutate(name = lapply(splits, `[`,1)) %>%
+  mutate(server = lapply(splits, `[`,2)) %>%
+  mutate(region = lapply(splits, `[`,3)) %>%
+  mutate(splits = strsplit(progress, ",")) %>%
+  mutate(p2progress = lapply(splits, `[`,1)) %>%
+  mutate(bsa = lapply(splits, `[`,2)) %>%
+  mutate(p2progress = gsub("\\ ","",p2progress)) %>%
+  mutate(bsa = str_sub(bsa,-7,-2)) %>%
+  mutate(bsa = str_sub(bsa,1,4)) %>%
+  mutate(bsa = as.numeric(bsa)) %>%
+  mutate(p2progress1 = ifelse(str_sub(p2progress,-2,-1) == 10, p2progress, "0")) %>%
+  mutate(p2progress1 = gsub("\\/10","",p2progress1)) %>%
+  mutate(p2progressf = ifelse(p2progress1 == 0, "保密", p2progress)) %>%
+  mutate(region = gsub("[^A-Z]","",region)) %>% 
+  mutate(talent = word(class, -1)) %>%
+  select(rank, name, server, region, class, talent, score, p2progress, p2progressf, p2progress1, bsa) %>%
+  mutate(class = word(class, 1)) %>%
+  group_by(class,talent) %>%
+  mutate(trank = rank(-score, ties.method = "random")) %>%
+  mutate(color = ifelse(bsa >= 99, "S", ifelse(bsa < 99 & bsa >= 95, "L", ifelse(bsa < 95 & bsa >= 75, "E", ifelse(bsa < 75 & bsa >= 50, "R", ifelse(bsa < 50 & bsa >= 25, "U", "C")))))) %>%
+  mutate(server = ifelse(server == "Bloodsail", "Bloodsail Buccaneers", server), region = "US") %>%
+  mutate(server = ifelse(server == "Deviate", "Deviate Delight", server), region = "US") %>%
+  mutate(server = ifelse(server == "Old", "Old Blanchy", server), region = "US") %>%
+  filter(is.na(bsa) == FALSE)
+
+gname <- as.character(pagle1$name)
+grade <- as.character(pagle1$bsa)
+gg <- data.frame(name = gname,grade = as.numeric(grade))
+setDT(gg)
+setDT(level)
+title <- level[gg, roll = TRUE, on = c("level" = "grade")]
+pagle1 <- cbind(pagle1, title = title$tittle)
+
+
+#检测是否分离正确，看region是不是US
+
+test1 <- pagle1 %>% filter(region != "US")
+test2 <- pagle1 %>% filter(is.na(bsa) == TRUE)
+
+
+
+
+pagle4q <- pagle1 %>% group_by(name) %>% filter(n() == 4) %>% arrange(desc(name))
+pagle3t <- pagle1 %>% group_by(name) %>% filter(n() == 3) %>%
+  filter(score != min(score)) %>%
+  arrange(desc(name)) 
+pagle1d <- pagle1 %>% group_by(name) %>% filter(n() == 2) %>% arrange(desc(name))
+pagle1d <- rbind(pagle1d,pagle3t)
+pagle1u <- pagle1 %>% group_by(name) %>% filter(n() == 1)
+
+k <- nrow(pagle1d)/2
+
+pagle1d1 <- data.frame()
+for (aa in seq(from = 1, to = k)){
+  bb = aa * 2
+ pagle1d1 <- rbind(pagle1d1,pagle1d[bb:bb,])
+}
+
+pagle1d2 <- data.frame()
+for (aa in seq(from = 1, to = k)){
+  bb = aa * 2 - 1
+ pagle1d2 <- rbind(pagle1d2,pagle1d[bb:bb,])
+}
+
+
+
+
+
+pagle1d1 <- pagle1d1 %>% mutate(classcn = ifelse(class == "Mage", "法", 
+                                           ifelse(class == "Shaman", "萨", ifelse(class == "Hunter", "猎", ifelse(class == "Priest", "牧", ifelse(class == "Druid", "德", ifelse(class == "Warlock", "术", ifelse(class == "Rogue", "贼", ifelse(class == "Warrior", "战","骑")))))))))
+
+pagle1d1 <- pagle1d1 %>% mutate(talentcn = ifelse(talent == "Arcane", "奥", ifelse(talent == "Fire", "火", ifelse(talent == "Frost", "冰", ifelse(talent == "Elemental", "元素", ifelse(talent == "Enhancement", "增强", ifelse(talent == "Restoration", "奶", ifelse(talent == "BeastMastery", "兽王", ifelse(talent == "Marksmanship", "射击", ifelse(talent == "Survival", "生存", ifelse(talent == "Discipline", "戒律", ifelse(talent == "Holy"& class == "Priest", "神", ifelse(talent == "Shadow", "暗", ifelse(talent == "Balance", "平衡", ifelse(talent == "Feral", "野", ifelse(talent == "Affliction", "痛苦", ifelse(talent == "Demonology", "恶魔", ifelse(talent == "Destruction", "毁灭", ifelse(talent == "Assassination", "刺杀", ifelse(talent == "Combat", "战斗", ifelse(talent == "Subtlety", "敏锐", ifelse(talent == "Arms", "武器", ifelse(talent == "Fury", "狂暴", ifelse(talent == "Gladiator", "角斗", ifelse(talent == "Holy" & class == "Paladin", "奶", "惩戒")))))))))))))))))))))))))
+
+pagle1d2 <- pagle1d2 %>% mutate(classcn = ifelse(class == "Mage", "法", 
+                                           ifelse(class == "Shaman", "萨", ifelse(class == "Hunter", "猎", ifelse(class == "Priest", "牧", ifelse(class == "Druid", "德", ifelse(class == "Warlock", "术", ifelse(class == "Rogue", "贼", ifelse(class == "Warrior", "战","骑")))))))))
+
+pagle1d2 <- pagle1d2 %>% mutate(talentcn = ifelse(talent == "Arcane", "奥", ifelse(talent == "Fire", "火", ifelse(talent == "Frost", "冰", ifelse(talent == "Elemental", "元素", ifelse(talent == "Enhancement", "增强", ifelse(talent == "Restoration", "奶", ifelse(talent == "BeastMastery", "兽王", ifelse(talent == "Marksmanship", "射击", ifelse(talent == "Survival", "生存", ifelse(talent == "Discipline", "戒律", ifelse(talent == "Holy"& class == "Priest", "神", ifelse(talent == "Shadow", "暗", ifelse(talent == "Balance", "平衡", ifelse(talent == "Feral", "野", ifelse(talent == "Affliction", "痛苦", ifelse(talent == "Demonology", "恶魔", ifelse(talent == "Destruction", "毁灭", ifelse(talent == "Assassination", "刺杀", ifelse(talent == "Combat", "战斗", ifelse(talent == "Subtlety", "敏锐", ifelse(talent == "Arms", "武器", ifelse(talent == "Fury", "狂暴", ifelse(talent == "Gladiator", "角斗", ifelse(talent == "Holy" & class == "Paladin", "奶", "惩戒")))))))))))))))))))))))))
+
+pagle1u <- pagle1u %>% mutate(classcn = ifelse(class == "Mage", "法", 
+                                           ifelse(class == "Shaman", "萨", ifelse(class == "Hunter", "猎", ifelse(class == "Priest", "牧", ifelse(class == "Druid", "德", ifelse(class == "Warlock", "术", ifelse(class == "Rogue", "贼", ifelse(class == "Warrior", "战","骑")))))))))
+
+pagle1u <- pagle1u %>% mutate(talentcn = ifelse(talent == "Arcane", "奥", ifelse(talent == "Fire", "火", ifelse(talent == "Frost", "冰", ifelse(talent == "Elemental", "元素", ifelse(talent == "Enhancement", "增强", ifelse(talent == "Restoration", "奶", ifelse(talent == "BeastMastery", "兽王", ifelse(talent == "Marksmanship", "射击", ifelse(talent == "Survival", "生存", ifelse(talent == "Discipline", "戒律", ifelse(talent == "Holy"& class == "Priest", "神", ifelse(talent == "Shadow", "暗", ifelse(talent == "Balance", "平衡", ifelse(talent == "Feral", "野", ifelse(talent == "Affliction", "痛苦", ifelse(talent == "Demonology", "恶魔", ifelse(talent == "Destruction", "毁灭", ifelse(talent == "Assassination", "刺杀", ifelse(talent == "Combat", "战斗", ifelse(talent == "Subtlety", "敏锐", ifelse(talent == "Arms", "武器", ifelse(talent == "Fury", "狂暴", ifelse(talent == "Gladiator", "角斗", ifelse(talent == "Holy" & class == "Paladin", "奶", "惩戒")))))))))))))))))))))))))
+
+pagle1u <- pagle1u %>% mutate(lua = paste0('["', name, '"]', " = ", '"', color, "D:", "(", talentcn, classcn, ")", score, " -> 评价:", title, '%",'))
+pagle1u <- pagle1u %>% mutate(lua2 = paste0('["',name, '"]'," = ",'"',"团本进度:",p2progressf,'",'))
+pagle1u <- pagle1u %>% mutate(lua3 = paste0('["',name, '"]'," = ",'"', color,"评价:",title, '%",'))
+
+pagle1d1 <- pagle1d1 %>% mutate(lua = paste0('["',name,'"]'," = ",'"',color, "D:","(", talentcn, classcn, ")", score, " %"))
+pagle1d1 <- pagle1d1 %>% mutate(lua2 = paste0('["',name, '"]'," = ",'"',"团本进度:",p2progressf,'",'))
+pagle1d1 <- pagle1d1 %>% mutate(lua3 = paste0('["',name, '"]'," = ",'"', color,"评价:",title, '%",')) 
+
+pagle1d2 <- pagle1d2 %>% mutate(lua = paste0(color, "K:","(", talentcn, classcn, ")", score, " -> 评价:", title, '%",'))
+pagle1d2 <- pagle1d2 %>% mutate(lua2 = paste0('["',name, '"]'," = ",'"',"团本进度:",p2progressf,'",'))
+pagle1d2 <- pagle1d2 %>% mutate(lua3 = paste0('["',name, '"]'," = ",'"', color,"评价:",title , '%",')) 
+
+
+##1u是所有单天赋词条
+##1dd是所有双天赋词条
+
+palge1dd <- data.frame(lua1 = pagle1d1$lua, lua2 = pagle1d2$lua)
+palge1dd <- palge1dd %>% mutate(lua3 = paste0(lua1,lua2))
+write_excel_csv(palge1dd, path = "palge1dd.csv")
+write_excel_csv(pagle1d1, path = "palge1d1.csv")
+write_excel_csv(pagle1u, path = "pagle1u.csv")
